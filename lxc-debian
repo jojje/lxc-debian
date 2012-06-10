@@ -206,6 +206,11 @@ lxc.tty = 4
 lxc.pts = 1024
 lxc.rootfs = $rootfs
 lxc.cgroup.devices.deny = a
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = br0
+lxc.network.name = eth0
+lxc.network.mtu = 1500
 # /dev/null and zero
 lxc.cgroup.devices.allow = c 1:3 rwm
 lxc.cgroup.devices.allow = c 1:5 rwm
