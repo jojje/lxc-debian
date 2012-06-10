@@ -97,6 +97,13 @@ EOF
     chroot $rootfs /usr/sbin/update-rc.d -f hwclock.sh remove
     chroot $rootfs /usr/sbin/update-rc.d -f hwclockfirst.sh remove
 
+    # create terminal devices so lxc-console works
+    for i in 1 2;do
+        if [ ! -c $rootfs/dev/tty$i ];then
+            mknod -m 666 $rootfs/dev/tty$i c 4 1
+        fi
+    done
+
     echo "root:root" | chroot $rootfs chpasswd
     echo "Root password is 'root', please change !"
 
