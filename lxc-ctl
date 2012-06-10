@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# lxc-ctl - Start and stop LXC containers by simply picking the VM's number.
+# Copyright (C) 2012 Jonas Tingeborn (tinjon@gmail.com)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+get_vms() {
+  status=$1
+  for vm in $(lxc-ls -1|sort -u);do
+    sudo lxc-info --name $vm|grep $status|cut -d' ' -f 1|tr "'" " "
+  done
+}
+
+pick_vm(){
+  status=$1
+  choice=-1
+  vmsstr=$(get_vms $status)
+  if [ -z "$vmsstr" ];then
+    echo "No VM in state $status"
+    exit 0
+  fi
+  while [[ $choice -lt 1 || $choice -gt ${#vms[@]} ]];do
+    i=0
+    echo ""
+    for vm in $vmsstr;do
+      ((i++))
+      vms[$i]=$vm
+      echo "$i) $vm"
+    done
+    echo -n "Start VM# "
+    read choice
+  done
+  vm=${vms[$choice]}
+}
+
+stop_vm(){
+  pick_vm RUNNING
+  echo "stopping vm: $vm"
+  sudo lxc-stop -n $vm
+}
+start_vm(){
+  pick_vm STOPPED
+  echo "starting vm: $vm"
+  sudo lxc-start -n $vm -d
+}
+usage(){
+  echo "Usage: $(basename $0) start|stop"
+  exit 1
+}
+
+case $1 in
+  start) start_vm;;
+  stop) stop_vm;;
+  *) usage
+esac
+
