@@ -5,6 +5,7 @@
 
 # Authors:
 # Daniel Lezcano <daniel.lezcano@free.fr>
+# Jonas Tingeborn <tinjon@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -388,3 +389,4 @@ if [ ! -z $clean ]; then
     clean || exit 1
     exit 0
 fi
+
