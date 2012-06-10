@@ -1,0 +1,13 @@
+It shouldn't take more than five seconds to create a VM or managing their
+life-cycle states.
+
+* lxc-debian creates a Linux Container VM in under five seconds after the
+             initial run, where debian needs to download and cache the
+             apt packages. This is an updated and enhanced version of the
+             scripts that accompanies the debian LXC package, and includes
+             fixes as well as some enhancements, esp. regarding networking.
+
+* lxc-ctl    is a interactive control script which gives you a menu of your
+             available containers, so you can simply mark the one you want
+             to start or stop.
+
