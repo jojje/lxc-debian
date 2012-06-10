@@ -147,7 +147,7 @@ copy_debian()
     rootfs=$3
 
     # make a local copy of the minidebian
-    echo -n "Copying rootfs to $rootfs..."
+    echo "Copying rootfs to $rootfs..."
     cp -a $cache/rootfs-$arch $rootfs || return 1
     return 0
 }
@@ -180,6 +180,11 @@ install_debian()
                 echo "Failed to download 'debian base'"
                 return 1
             fi
+        fi
+
+        if [ ! -d "$path" ];then
+            echo "Creating VM directory: $path"
+            mkdir "$path"
         fi
 
         copy_debian $cache $arch $rootfs
@@ -272,7 +277,7 @@ parse_netconfig()
     netmask=$(echo $ipstr|tr '/' ' '|cut -d' ' -f 2)
     gateway=$(echo $ipstr|tr '/' ' '|cut -d' ' -f 3)
     dnsservers=$(echo $dnsstr|tr ',' ' ')
-    if [ -z "$gateway" ];then
+    if [[ ! -z "$ipstr" && -z "$gateway" ]];then
       echo "Invalid IP configuration, refer to --help"
       exit 1
     fi
