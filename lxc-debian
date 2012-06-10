@@ -284,6 +284,14 @@ parse_netconfig()
     fi
 }
 
+ensure_hostname()
+{
+    # If a vm-name hasn't been explicitly provided, use the vm's dir-name
+    if [ -z "$name" ];then
+        name=$(basename $path)
+    fi
+}
+
 dump_config()
 {
     echo "# The VM will be configured with the following attributes:"
@@ -360,6 +368,7 @@ fi
 
 rootfs=$path/rootfs
 
+ensure_hostname
 parse_netconfig $ip $dns
 
 if [ ! -z "$dryrun" ];then
