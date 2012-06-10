@@ -65,11 +65,11 @@ EOF
 
     # reconfigure some services
     if [ -z "$LANG" ]; then
-  LANG=en_US.UTF-8
+        LANG=en_US.UTF-8
     fi
-  chroot $rootfs /bin/bash -c "sed 's/^# en_US/en_US/g' /etc/locale.gen > /tmp/newlocale; mv /tmp/newlocale /etc/locale.gen"
-	chroot $rootfs locale-gen $LANG
-	chroot $rootfs update-locale LANG=$LANG
+    chroot $rootfs /bin/bash -c "sed 's/^# en_US/en_US/g' /etc/locale.gen > /tmp/newlocale; mv /tmp/newlocale /etc/locale.gen"
+    chroot $rootfs locale-gen $LANG
+    chroot $rootfs update-locale LANG=$LANG
 
     # remove pointless services in a container
     chroot $rootfs /usr/sbin/update-rc.d -f umountfs remove
@@ -101,18 +101,18 @@ openssh-server
     # check the mini debian was not already downloaded
     mkdir -p "$cache/partial-$arch"
     if [ $? -ne 0 ]; then
-	echo "Failed to create '$cache/partial-$arch' directory"
-	return 1
+        echo "Failed to create '$cache/partial-$arch' directory"
+        return 1
     fi
 
     # download a mini debian into a cache
     echo "Downloading debian minimal ..."
     debootstrap --verbose --variant=minbase --arch=$arch \
-	--include $packages \
-	stable $cache/partial-$arch http://ftp.debian.org/debian
+    --include $packages \
+    stable $cache/partial-$arch http://ftp.debian.org/debian
     if [ $? -ne 0 ]; then
-	echo "Failed to download the rootfs, aborting."
-	return 1
+        echo "Failed to download the rootfs, aborting."
+        return 1
     fi
 
     mv "$1/partial-$arch" "$1/rootfs-$arch"
@@ -139,39 +139,39 @@ install_debian()
     rootfs=$1
     mkdir -p /var/lock/subsys/
     (
-	flock -n -x 200
-	if [ $? -ne 0 ]; then
-	    echo "Cache repository is busy."
-	    return 1
-	fi
+        flock -n -x 200
+        if [ $? -ne 0 ]; then
+            echo "Cache repository is busy."
+            return 1
+        fi
 
-	arch=$(arch)
-	if [ "$arch" == "x86_64" ]; then
-	    arch=amd64
-	fi
+        arch=$(arch)
+        if [ "$arch" == "x86_64" ]; then
+            arch=amd64
+        fi
 
-	if [ "$arch" == "i686" ]; then
-	    arch=i386
-	fi
+        if [ "$arch" == "i686" ]; then
+            arch=i386
+        fi
 
-	echo "Checking cache download in $cache/rootfs-$arch ... "
-	if [ ! -e "$cache/rootfs-$arch" ]; then
-	    download_debian $cache $arch
-	    if [ $? -ne 0 ]; then
-		echo "Failed to download 'debian base'"
-		return 1
-	    fi
-	fi
+        echo "Checking cache download in $cache/rootfs-$arch ... "
+        if [ ! -e "$cache/rootfs-$arch" ]; then
+            download_debian $cache $arch
+            if [ $? -ne 0 ]; then
+                echo "Failed to download 'debian base'"
+                return 1
+            fi
+        fi
 
-	copy_debian $cache $arch $rootfs
-	if [ $? -ne 0 ]; then
-	    echo "Failed to copy rootfs"
-	    return 1
-	fi
+        copy_debian $cache $arch $rootfs
+        if [ $? -ne 0 ]; then
+            echo "Failed to copy rootfs"
+            return 1
+        fi
 
-	return 0
+        return 0
 
-	) 200>/var/lock/subsys/lxc
+    ) 200>/var/lock/subsys/lxc
 
     return $?
 }
@@ -210,8 +210,8 @@ lxc.mount.entry=sysfs $rootfs/sys sysfs defaults  0 0
 EOF
 
     if [ $? -ne 0 ]; then
-	echo "Failed to add configuration"
-	return 1
+        echo "Failed to add configuration"
+        return 1
     fi
 
     return 0
@@ -222,20 +222,20 @@ clean()
     cache="/var/cache/lxc/debian"
 
     if [ ! -e $cache ]; then
-	exit 0
+        exit 0
     fi
 
     # lock, so we won't purge while someone is creating a repository
     (
-	flock -n -x 200
-	if [ $? != 0 ]; then
-	    echo "Cache repository is busy."
-	    exit 1
-	fi
+    flock -n -x 200
+    if [ $? != 0 ]; then
+        echo "Cache repository is busy."
+        exit 1
+    fi
 
-	echo -n "Purging the download cache..."
-	rm --preserve-root --one-file-system -rf $cache && echo "Done." || exit 1
-	exit 0
+    echo -n "Purging the download cache..."
+    rm --preserve-root --one-file-system -rf $cache && echo "Done." || exit 1
+    exit 0
 
     ) 200>/var/lock/subsys/lxc
 }
@@ -250,20 +250,20 @@ EOF
 
 options=$(getopt -o hp:n:c -l help,path:,name:,clean -- "$@")
 if [ $? -ne 0 ]; then
-        usage $(basename $0)
-	exit 1
+    usage $(basename $0)
+    exit 1
 fi
 eval set -- "$options"
 
 while true
 do
     case "$1" in
-        -h|--help)      usage $0 && exit 0;;
-        -p|--path)      path=$2; shift 2;;
-	-n|--name)      name=$2; shift 2;;
-	-c|--clean)     clean=$2; shift 2;;
-        --)             shift 1; break ;;
-        *)              break ;;
+      -h|--help)      usage $0 && exit 0;;
+      -p|--path)      path=$2; shift 2;;
+      -n|--name)      name=$2; shift 2;;
+      -c|--clean)     clean=$2; shift 2;;
+      --)             shift 1; break ;;
+      *)              break ;;
     esac
 done
 
