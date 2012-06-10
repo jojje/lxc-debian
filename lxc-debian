@@ -82,6 +82,7 @@ EOF
     fi
     # set the hostname
     echo "$hostname" > $rootfs/etc/hostname
+    sed -i.bak "s/\(127.0.0.1.*\)/\1 $hostname/" $rootfs/etc/hosts
 
     # reconfigure some services
     if [ -z "$LANG" ]; then
