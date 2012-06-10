@@ -49,19 +49,38 @@ EOF
     mkdir -p $rootfs/selinux
     echo 0 > $rootfs/selinux/enforce
 
-    # configure the network using the dhcp
-    cat <<EOF > $rootfs/etc/network/interfaces
+    if [ -z "$ipaddress" ];then
+        # configure the network using the dhcp
+        cat <<EOF > $rootfs/etc/network/interfaces
 auto lo
 iface lo inet loopback
 
 auto eth0
 iface eth0 inet dhcp
 EOF
+    else
+        # configure the network using the static ip
+        cat <<EOF > $rootfs/etc/network/interfaces
+auto lo
+iface lo inet loopback
 
-    # set the hostname
-    cat <<EOF > $rootfs/etc/hostname
-$hostname
+auto eth0
+iface eth0 inet static
+  address $ipaddress
+  netmask $netmask
+  gateway $gateway
 EOF
+    fi
+    if [ ! -z "$dnsservers" ];then
+        # configure the user provided DNS server(s)
+        s=$(grep -v ^nameserver $rootfs/etc/resolv.conf)
+        echo "$s" > $rootfs/etc/resolv.conf
+        for dns in $dnsservers;do
+            echo "nameserver $dns" >> $rootfs/etc/resolv.conf
+        done
+    fi
+    # set the hostname
+    echo "$hostname" > $rootfs/etc/hostname
 
     # reconfigure some services
     if [ -z "$LANG" ]; then
@@ -240,15 +259,51 @@ clean()
     ) 200>/var/lock/subsys/lxc
 }
 
+parse_netconfig()
+{
+    ipstr="$1"
+    dnsstr="$2"
+    ipaddress=$(echo $ipstr|tr '/' ' '|cut -d' ' -f 1)
+    netmask=$(echo $ipstr|tr '/' ' '|cut -d' ' -f 2)
+    gateway=$(echo $ipstr|tr '/' ' '|cut -d' ' -f 3)
+    dnsservers=$(echo $dnsstr|tr ',' ' ')
+    if [ -z "$gateway" ];then
+      echo "Invalid IP configuration, refer to --help"
+      exit 1
+    fi
+}
+
+dump_config()
+{
+    echo "# The VM will be configured with the following attributes:"
+    echo "name=$name"
+    echo "path=$path"
+    echo "ip=$ipaddress"
+    echo "netmask=$netmask"
+    echo "gateway=$gateway"
+    echo "dns=$dnsservers"
+}
+
 usage()
 {
     cat <<EOF
-$1 -h|--help -p|--path=<path> --clean
+$1 OPTIONS
+  -n --name=<vm name>  Will also be the hostname
+  -p --path=<path>     To the root folder of the VM
+  -i --ip=<ip-config>  In the format IP_ADDRESS/NETMASK/GATEWAY 
+                       E.g. 192.168.1.2/255.255.255.0/192.168.1.1
+                       If not provided, DHCP will be used.
+  -d --dns=<dns-svrs>  One or more DNS servers to use, separated 
+                       by comma.
+  -c --clean           Discard / purge downloaded packages
+  -D --dryrun          Show the configuration parameters that will 
+                       be used, without actually creating a VM.
+  -h --help 
 EOF
     return 0
 }
 
-options=$(getopt -o hp:n:c -l help,path:,name:,clean -- "$@")
+options=$(getopt -o hp:n:i:d:Dc -l help,path:,name:,ip:,dns:,dryrun,clean -- "$@")
 if [ $? -ne 0 ]; then
     usage $(basename $0)
     exit 1
@@ -262,6 +317,9 @@ do
       -p|--path)      path=$2; shift 2;;
       -n|--name)      name=$2; shift 2;;
       -c|--clean)     clean=$2; shift 2;;
+      -i|--ip)        ip=$2; shift 2;;
+      -d|--dns)       dns=$2; shift 2;;
+      -D|--dryrun)    dryrun=1; shift 1;;
       --)             shift 1; break ;;
       *)              break ;;
     esac
@@ -288,7 +346,15 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+
 rootfs=$path/rootfs
+
+parse_netconfig $ip $dns
+
+if [ ! -z "$dryrun" ];then
+  dump_config
+  exit 0
+fi
 
 install_debian $rootfs
 if [ $? -ne 0 ]; then
